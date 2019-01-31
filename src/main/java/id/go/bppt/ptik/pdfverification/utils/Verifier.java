@@ -24,9 +24,17 @@ import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.ocsp.BasicOCSPResp;
+import org.bouncycastle.cms.SignerId;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.tsp.*;
+import org.bouncycastle.util.Store;
 
 /**
  *
@@ -42,7 +50,26 @@ public class Verifier {
         PdfPKCS7 pkcs7 = fields.verifySignature(name);
         System.out.println("Integrity check OK? " + pkcs7.verify());
 
-        Certificate[] certs = pkcs7.getSignCertificateChain();
+        if (pkcs7.isTsp()) {
+            TimeStampToken token = pkcs7.getTimeStampToken();
+            TimeStampTokenInfo tsInfo = token.getTimeStampInfo();
+
+            Store store = token.getCertificates();
+            
+            Collection<X509CertificateHolder> holders = store.getMatches(token.getSID());
+            
+            for (X509CertificateHolder certHolder : holders) {
+                X509Certificate certFromTSA = new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
+                
+                System.out.println("Issuer: " + certFromTSA.getIssuerDN());
+                System.out.println("Subject: " + certFromTSA.getSubjectDN());
+            }
+
+            System.out.println(tsInfo.getSerialNumber().toString(16));
+            System.out.println(tsInfo.getGenTime().toString());
+        }
+
+        Certificate[] certs = pkcs7.getCertificates();
         Calendar cal = pkcs7.getSignDate();
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
         if (errors.isEmpty()) {
@@ -115,6 +142,7 @@ public class Verifier {
         PdfReader reader = new PdfReader(path);
         AcroFields fields = reader.getAcroFields();
         ArrayList<String> names = fields.getSignatureNames();
+
         for (String name : names) {
             System.out.println("===== " + name + " =====");
             verifySignature(fields, name);

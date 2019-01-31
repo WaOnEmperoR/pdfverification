@@ -18,6 +18,7 @@ import java.security.cert.CertificateFactory;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.tsp.TimeStampTokenInfo;
 
 /**
  *
@@ -30,7 +31,8 @@ public class TestVerify {
     public static final String KPU = "D:\\Tugas PTIK\\Pemilu Elektronik\\BANTAENG - JUNI 2018\\Certificate Chain\\KPU_KOMISI_PEMILIHAN_UMUM_iOTENTIK_.cer";
     public static final String RACHMAWAN = "D:\\Tugas PTIK\\Pemilu Elektronik\\BANTAENG - JUNI 2018\\Certificate Chain\\Rachmawan_Atmaji_KPU_KOMISI_PEMILIHAN_UMUM_.cer";
 
-    public static final String DOC = "D:\\Tugas PTIK\\Pemilu Elektronik\\f27aac65-48ed-444d-bc3d-1f8d7d2dd217.pdf_SIGNED.pdf";
+//    public static final String DOC = "D:\\Tugas PTIK\\Pemilu Elektronik\\WebSocketC1Server\\35f0509f-50ec-4b77-afb3-8114af3b19b4.pdf";
+    public static final String DOC = "D:\\Tugas PTIK\\Certificate Authority\\Kegiatan 2019\\tes_TSA.pdf";
     
     public static void main(String[] args) {
         BouncyCastleProvider provider = new BouncyCastleProvider();
@@ -48,8 +50,8 @@ public class TestVerify {
                     cf.generateCertificate(new FileInputStream(IOTENTIK)));
             ks.setCertificateEntry("kpu",
                     cf.generateCertificate(new FileInputStream(KPU)));
-            ks.setCertificateEntry("rachmawan",
-                    cf.generateCertificate(new FileInputStream(RACHMAWAN)));
+//            ks.setCertificateEntry("rachmawan",
+//                    cf.generateCertificate(new FileInputStream(RACHMAWAN)));
             
             Verifier verify = new Verifier(ks);
             verify.verifySignatures(DOC);

@@ -16,17 +16,27 @@ import com.itextpdf.text.pdf.security.VerificationOK;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.interfaces.DHPublicKey;
 import org.bouncycastle.asn1.x509.GeneralName;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -35,6 +45,7 @@ import org.bouncycastle.cms.SignerId;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.tsp.*;
 import org.bouncycastle.util.Store;
+import org.bouncycastle.util.encoders.Hex;
 
 /**
  *
@@ -51,6 +62,8 @@ public class Verifier {
         System.out.println("Integrity check OK? " + pkcs7.verify());
 
         if (pkcs7.isTsp()) {
+            System.out.println("---THIS IS TSP---");
+            System.out.println("===Begin TSP Reading===");
             TimeStampToken token = pkcs7.getTimeStampToken();
             TimeStampTokenInfo tsInfo = token.getTimeStampInfo();
 
@@ -67,6 +80,10 @@ public class Verifier {
 
             System.out.println(tsInfo.getSerialNumber().toString(16));
             System.out.println(tsInfo.getGenTime().toString());
+            
+            System.out.println("===End TSP Reading===");
+            
+            return pkcs7;
         }
 
         Certificate[] certs = pkcs7.getCertificates();
@@ -121,12 +138,64 @@ public class Verifier {
     public void showCertificateInfo(X509Certificate cert, Date signDate) throws CertificateExpiredException, CertificateNotYetValidException {
         System.out.println("Issuer: " + cert.getIssuerDN());
         System.out.println("Subject: " + cert.getSubjectDN());
+        System.out.println("Serial Number: " + cert.getSerialNumber().toString(16));
+        
+        int len;
+        
+        System.out.print("Public Key Type: ");
+        if (cert.getPublicKey() instanceof RSAPublicKey)
+        {
+            RSAPublicKey rsaPk = (RSAPublicKey) cert.getPublicKey();
+            len = rsaPk.getModulus().bitLength();
+            System.out.println("RSA Public Key (" + len + " bit)");
+        }
+        else if(cert.getPublicKey() instanceof DSAPublicKey)
+        {
+            DSAPublicKey dsaPk = (DSAPublicKey) cert.getPublicKey();
+            len = dsaPk.getY().bitLength();
+            System.out.println("DSA Public Key (" + len + " bit)");
+        }
+        else if(cert.getPublicKey() instanceof ECPublicKey)
+        {
+            System.out.println("EC Public Key");
+        }
+        else if(cert.getPublicKey() instanceof DHPublicKey)
+        {
+            DHPublicKey dhPk = (DHPublicKey) cert.getPublicKey();
+            len = dhPk.getY().bitLength();
+            System.out.println("DH Public Key (" + len + " bit)");
+        }
+        else
+        {
+            System.out.println("Unknown Public Key Type");
+        }
+        
+        System.out.println("Signature Algorithm: " + cert.getSigAlgName());
+        
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA1");
+            byte[] result = digest.digest(cert.getEncoded());
+            String hex = Hex.toHexString(result).toUpperCase();
+            String res = StringFormatter.insertPeriodically(hex, "::", 2);
+            System.out.println("SHA1 Fingerprint: " + res);
+        } catch (NoSuchAlgorithmException | CertificateEncodingException ex) {
+            Logger.getLogger(Verifier.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
         SimpleDateFormat date_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SS");
         System.out.println("Valid from: " + date_format.format(cert.getNotBefore()));
         System.out.println("Valid to: " + date_format.format(cert.getNotAfter()));
-        cert.checkValidity(signDate);
-        System.out
-                .println("The certificate was valid at the time of signing.");
+        
+        try {
+            cert.checkValidity(signDate);
+            System.out.println("The certificate was valid at the time of signing.");
+        } catch (CertificateExpiredException e) {
+            System.out.println("The certificate was valid expired at the time of signing.");
+        } catch (CertificateNotYetValidException e) {
+            System.out.println("The certificate was not valid at the time of signing..");
+        }
+        
         try {
             cert.checkValidity();
             System.out.println("The certificate is still valid.");

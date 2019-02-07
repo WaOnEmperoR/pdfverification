@@ -14,6 +14,7 @@ import com.itextpdf.text.pdf.security.PdfPKCS7;
 import com.itextpdf.text.pdf.security.VerificationException;
 import com.itextpdf.text.pdf.security.VerificationOK;
 import java.io.IOException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -74,8 +75,8 @@ public class Verifier {
             for (X509CertificateHolder certHolder : holders) {
                 X509Certificate certFromTSA = new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
                 
-                System.out.println("Issuer: " + certFromTSA.getIssuerDN());
-                System.out.println("Subject: " + certFromTSA.getSubjectDN());
+                System.out.println("Issuer: " + certFromTSA.getIssuerDN().toString());
+                System.out.println("Subject: " + certFromTSA.getSubjectDN().toString());
             }
 
             System.out.println(tsInfo.getSerialNumber().toString(16));
@@ -86,6 +87,7 @@ public class Verifier {
             return pkcs7;
         }
 
+        System.out.println("SignName : " + pkcs7.getSignName());
         Certificate[] certs = pkcs7.getCertificates();
         Calendar cal = pkcs7.getSignDate();
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
@@ -136,8 +138,8 @@ public class Verifier {
     }
 
     public void showCertificateInfo(X509Certificate cert, Date signDate) throws CertificateExpiredException, CertificateNotYetValidException {
-        System.out.println("Issuer: " + cert.getIssuerDN());
-        System.out.println("Subject: " + cert.getSubjectDN());
+        System.out.println("Issuer: " + cert.getIssuerDN().getName());
+        System.out.println("Subject: " + cert.getSubjectDN().getName());
         System.out.println("Serial Number: " + cert.getSerialNumber().toString(16));
         
         int len;
@@ -191,9 +193,9 @@ public class Verifier {
             cert.checkValidity(signDate);
             System.out.println("The certificate was valid at the time of signing.");
         } catch (CertificateExpiredException e) {
-            System.out.println("The certificate was valid expired at the time of signing.");
+            System.out.println("The certificate was expired at the time of signing.");
         } catch (CertificateNotYetValidException e) {
-            System.out.println("The certificate was not valid at the time of signing..");
+            System.out.println("The certificate was not valid at the time of signing.");
         }
         
         try {
@@ -207,8 +209,10 @@ public class Verifier {
     }
 
     public void verifySignatures(String path) throws IOException, GeneralSecurityException {
-        System.out.println(path);
-        PdfReader reader = new PdfReader(path);
+//        System.out.println(path);
+//        PdfReader reader = new PdfReader(path);
+//        PdfReader reader = new PdfReader(new URL("https://blogs.adobe.com/security/SampleSignedPDFDocument.pdf").openStream());
+        PdfReader reader = new PdfReader(new URL("https://teken.govca.id/storage/signpdf/demo/15.04.1062_cover_signed_15489103175c527eed768b46.pdf").openStream());
         AcroFields fields = reader.getAcroFields();
         ArrayList<String> names = fields.getSignatureNames();
 

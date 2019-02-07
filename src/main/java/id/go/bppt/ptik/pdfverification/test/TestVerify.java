@@ -30,9 +30,12 @@ public class TestVerify {
     public static final String IOTENTIK = "D:\\Tugas PTIK\\Pemilu Elektronik\\BANTAENG - JUNI 2018\\Certificate Chain\\iOTENTIK_Badan_Pengkajian_dan_Penerapan_Teknologi_.cer";
     public static final String KPU = "D:\\Tugas PTIK\\Pemilu Elektronik\\BANTAENG - JUNI 2018\\Certificate Chain\\KPU_KOMISI_PEMILIHAN_UMUM_iOTENTIK_.cer";
     public static final String RACHMAWAN = "D:\\Tugas PTIK\\Pemilu Elektronik\\BANTAENG - JUNI 2018\\Certificate Chain\\Rachmawan_Atmaji_KPU_KOMISI_PEMILIHAN_UMUM_.cer";
+    
+    public static final String DEV = "D:\\Tugas PTIK\\Certificate Authority\\iOTENTIK 2019\\iOTENTIK_Dev.cer";
+    public static final String ROOT = "D:\\Tugas PTIK\\Certificate Authority\\iOTENTIK 2019\\iOTENTIK_Root.cer";
 
 //    public static final String DOC = "D:\\Tugas PTIK\\Pemilu Elektronik\\WebSocketC1Server\\35f0509f-50ec-4b77-afb3-8114af3b19b4.pdf";
-    public static final String DOC = "D:\\Tugas PTIK\\Certificate Authority\\Kegiatan 2019\\tes_TSA.pdf";
+    public static final String DOC = "D:\\Tugas PTIK\\Certificate Authority\\iOTENTIK 2019\\tes_TSA.pdf";
     
     public static void main(String[] args) {
         BouncyCastleProvider provider = new BouncyCastleProvider();
@@ -45,11 +48,11 @@ public class TestVerify {
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             ks.setCertificateEntry("bppt",
-                    cf.generateCertificate(new FileInputStream(BPPT)));
+                    cf.generateCertificate(new FileInputStream(ROOT)));
             ks.setCertificateEntry("iotentik",
-                    cf.generateCertificate(new FileInputStream(IOTENTIK)));
-            ks.setCertificateEntry("kpu",
-                    cf.generateCertificate(new FileInputStream(KPU)));
+                    cf.generateCertificate(new FileInputStream(DEV)));
+//            ks.setCertificateEntry("kpu",
+//                    cf.generateCertificate(new FileInputStream(KPU)));
 //            ks.setCertificateEntry("rachmawan",
 //                    cf.generateCertificate(new FileInputStream(RACHMAWAN)));
             

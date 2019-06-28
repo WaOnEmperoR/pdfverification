@@ -91,11 +91,29 @@ public class Verifier {
         Certificate[] certs = pkcs7.getCertificates();
         Calendar cal = pkcs7.getSignDate();
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
+        
         if (errors.isEmpty()) {
             System.out.println("Certificates verified against the KeyStore");
         } else {
-            System.out.println(errors);
+            
+            for (int i=0; i<errors.size(); i++)
+            {
+                System.out.println(errors.get(i).getMessage());
+                
+            }
+//            errors.size();
+//            System.out.println(errors);
         }
+        
+        Certificate[] awal = new Certificate[1];
+        awal[0] = certs[1];
+        List<VerificationException> errors2 = CertificateVerification.verifyCertificates(awal, ks, cal);
+        if (errors2.isEmpty()) {
+            System.out.println("Certificates verified against the KeyStore");
+        } else {
+            System.out.println(errors2);
+        }
+        
         for (int i = 0; i < certs.length; i++) {
             X509Certificate cert = (X509Certificate) certs[i];
             System.out.println("=== Certificate " + i + " ===");
@@ -210,9 +228,9 @@ public class Verifier {
 
     public void verifySignatures(String path) throws IOException, GeneralSecurityException {
 //        System.out.println(path);
-//        PdfReader reader = new PdfReader(path);
+        PdfReader reader = new PdfReader(path);
 //        PdfReader reader = new PdfReader(new URL("https://blogs.adobe.com/security/SampleSignedPDFDocument.pdf").openStream());
-        PdfReader reader = new PdfReader(new URL("https://teken.govca.id/storage/signpdf/demo/15.04.1062_cover_signed_15489103175c527eed768b46.pdf").openStream());
+//        PdfReader reader = new PdfReader(new URL("https://teken.govca.id/storage/signpdf/demo/15.04.1062_cover_signed_15489103175c527eed768b46.pdf").openStream());
         AcroFields fields = reader.getAcroFields();
         ArrayList<String> names = fields.getSignatureNames();
 

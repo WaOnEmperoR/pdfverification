@@ -47,6 +47,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.tsp.*;
 import org.bouncycastle.util.Store;
 import org.bouncycastle.util.encoders.Hex;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -57,14 +58,14 @@ public class Verifier {
     KeyStore ks;
 
     public PdfPKCS7 verifySignature(AcroFields fields, String name) throws GeneralSecurityException, IOException {
-        System.out.println("Signature covers whole document: " + fields.signatureCoversWholeDocument(name));
-        System.out.println("Document revision: " + fields.getRevision(name) + " of " + fields.getTotalRevisions());
+        System.out.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name));
+        System.out.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions());
         PdfPKCS7 pkcs7 = fields.verifySignature(name);
-        System.out.println("Integrity check OK? " + pkcs7.verify());
-
+        System.out.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify());
+        
         if (pkcs7.isTsp()) {
-            System.out.println("---THIS IS TSP---");
-            System.out.println("===Begin TSP Reading===");
+            System.out.println(StringUtils.center("BEGIN TSP READING", 60, '='));
+            
             TimeStampToken token = pkcs7.getTimeStampToken();
             TimeStampTokenInfo tsInfo = token.getTimeStampInfo();
 
@@ -75,56 +76,60 @@ public class Verifier {
             for (X509CertificateHolder certHolder : holders) {
                 X509Certificate certFromTSA = new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
                 
-                System.out.println("Issuer: " + certFromTSA.getIssuerDN().toString());
-                System.out.println("Subject: " + certFromTSA.getSubjectDN().toString());
+                System.out.format("%-40s%s\n", "Issuer", certFromTSA.getIssuerDN().toString());
+                System.out.format("%-40s%s\n", "Subject", certFromTSA.getSubjectDN().toString());
             }
 
             System.out.println(tsInfo.getSerialNumber().toString(16));
             System.out.println(tsInfo.getGenTime().toString());
             
-            System.out.println("===End TSP Reading===");
+            System.out.format("%-40s%s\n", "TSA Serial Number", tsInfo.getSerialNumber().toString(16));
+            System.out.format("%-40s%s\n", "TSA Generation Time", tsInfo.getGenTime());
+            
+            System.out.println(StringUtils.center("END TSP READING", 60, '='));
             
             return pkcs7;
         }
 
-        System.out.println("SignName : " + pkcs7.getSignName());
+        System.out.format("%-40s%s\n", "SignName", pkcs7.getSignName());
         Certificate[] certs = pkcs7.getCertificates();
         Calendar cal = pkcs7.getSignDate();
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
         
         if (errors.isEmpty()) {
-            System.out.println("Certificates verified against the KeyStore");
+            System.out.println(StringUtils.center("Certs verified against the Keystore", 60, '='));
         } else {
-            
+            System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
             for (int i=0; i<errors.size(); i++)
             {
-                System.out.println(errors.get(i).getMessage());
-                
+                System.out.format("%3s %s\n", (i+1), errors.get(i).getMessage());
             }
-//            errors.size();
-//            System.out.println(errors);
         }
         
         Certificate[] awal = new Certificate[1];
         awal[0] = certs[1];
         List<VerificationException> errors2 = CertificateVerification.verifyCertificates(awal, ks, cal);
         if (errors2.isEmpty()) {
-            System.out.println("Certificates verified against the KeyStore");
+            System.out.println(StringUtils.center("Certs verified against the Keystore", 60, '='));
         } else {
-            System.out.println(errors2);
+            System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
+            System.out.format("%3s %s\n", "1", errors2);
         }
         
         for (int i = 0; i < certs.length; i++) {
             X509Certificate cert = (X509Certificate) certs[i];
-            System.out.println("=== Certificate " + i + " ===");
+            System.out.println(StringUtils.center("Certificate " + i, 60, '='));
             showCertificateInfo(cert, cal.getTime());
         }
         X509Certificate signCert = (X509Certificate) certs[0];
         X509Certificate issuerCert = (certs.length > 1 ? (X509Certificate) certs[1] : null);
-        System.out.println("=== Checking validity of the document at the time of signing ===");
+
+        System.out.println(StringUtils.center("Checking validity of the document at the time of signing", 60, '='));
         checkRevocation(pkcs7, signCert, issuerCert, cal.getTime());
-        System.out.println("=== Checking validity of the document today ===");
+
+        System.out.println(StringUtils.center("Checking validity of the document today", 60, '='));
         checkRevocation(pkcs7, signCert, issuerCert, new Date());
+
         return pkcs7;
     }
 
@@ -147,7 +152,7 @@ public class Verifier {
             verification.addAll(crlVerifier.verify(signCert, issuerCert, date));
         }
         if (verification.isEmpty()) {
-            System.out.println("The signing certificate couldn't be verified");
+            System.out.println(StringUtils.center("The signing certificate couldn't be verified", 60, '='));
         } else {
             verification.forEach((v) -> {
                 System.out.println(v);
@@ -156,41 +161,41 @@ public class Verifier {
     }
 
     public void showCertificateInfo(X509Certificate cert, Date signDate) throws CertificateExpiredException, CertificateNotYetValidException {
-        System.out.println("Issuer: " + cert.getIssuerDN().getName());
-        System.out.println("Subject: " + cert.getSubjectDN().getName());
-        System.out.println("Serial Number: " + cert.getSerialNumber().toString(16));
+       
+        System.out.format("%-40s%s\n", "Issuer", cert.getIssuerDN().getName());
+        System.out.format("%-40s%s\n", "Subject", cert.getSubjectDN().getName());
+        System.out.format("%-40s%s\n", "Serial Number", cert.getSerialNumber().toString(16));
         
         int len;
         
-        System.out.print("Public Key Type: ");
         if (cert.getPublicKey() instanceof RSAPublicKey)
         {
             RSAPublicKey rsaPk = (RSAPublicKey) cert.getPublicKey();
             len = rsaPk.getModulus().bitLength();
-            System.out.println("RSA Public Key (" + len + " bit)");
+            System.out.format("%-40s%s\n", "Public Key Type", "RSA Public Key (" + len + " bit)");
         }
         else if(cert.getPublicKey() instanceof DSAPublicKey)
         {
             DSAPublicKey dsaPk = (DSAPublicKey) cert.getPublicKey();
             len = dsaPk.getY().bitLength();
-            System.out.println("DSA Public Key (" + len + " bit)");
+            System.out.format("%-40s%s\n", "Public Key Type", "DSA Public Key (" + len + " bit)");
         }
         else if(cert.getPublicKey() instanceof ECPublicKey)
         {
-            System.out.println("EC Public Key");
+            System.out.format("%-40s%s\n", "Public Key Type", "EC Public Key");
         }
         else if(cert.getPublicKey() instanceof DHPublicKey)
         {
             DHPublicKey dhPk = (DHPublicKey) cert.getPublicKey();
             len = dhPk.getY().bitLength();
-            System.out.println("DH Public Key (" + len + " bit)");
+            System.out.format("%-40s%s\n", "Public Key Type", "DH Public Key (" + len + " bit)");
         }
         else
         {
-            System.out.println("Unknown Public Key Type");
+            System.out.format("%-40s%s\n", "Public Key Type", "Unknown Public Key Type");
         }
         
-        System.out.println("Signature Algorithm: " + cert.getSigAlgName());
+        System.out.format("%-40s%s\n", "Signature Algorithm", cert.getSigAlgName());
         
         MessageDigest digest;
         try {
@@ -198,31 +203,31 @@ public class Verifier {
             byte[] result = digest.digest(cert.getEncoded());
             String hex = Hex.toHexString(result).toUpperCase();
             String res = StringFormatter.insertPeriodically(hex, "::", 2);
-            System.out.println("SHA1 Fingerprint: " + res);
+            System.out.format("%-40s%s\n", "SHA1 Fingerprint", res);
         } catch (NoSuchAlgorithmException | CertificateEncodingException ex) {
             Logger.getLogger(Verifier.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         SimpleDateFormat date_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SS");
-        System.out.println("Valid from: " + date_format.format(cert.getNotBefore()));
-        System.out.println("Valid to: " + date_format.format(cert.getNotAfter()));
+        System.out.format("%-40s%s\n", "Valid from", date_format.format(cert.getNotBefore()));
+        System.out.format("%-40s%s\n", "Valid to", date_format.format(cert.getNotAfter()));
         
         try {
             cert.checkValidity(signDate);
-            System.out.println("The certificate was valid at the time of signing.");
+            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
         } catch (CertificateExpiredException e) {
-            System.out.println("The certificate was expired at the time of signing.");
+            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
         } catch (CertificateNotYetValidException e) {
-            System.out.println("The certificate was not valid at the time of signing.");
+            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
         }
         
         try {
             cert.checkValidity();
-            System.out.println("The certificate is still valid.");
+            System.out.println(StringUtils.center("The certificate is still valid.", 60, '='));
         } catch (CertificateExpiredException e) {
-            System.out.println("The certificate has expired.");
+            System.out.println(StringUtils.center("The certificate has expired.", 60, '='));
         } catch (CertificateNotYetValidException e) {
-            System.out.println("The certificate isn't valid yet.");
+            System.out.println(StringUtils.center("The certificate is not valid yet.", 60, '='));
         }
     }
 
@@ -235,7 +240,8 @@ public class Verifier {
         ArrayList<String> names = fields.getSignatureNames();
 
         for (String name : names) {
-            System.out.println("===== " + name + " =====");
+//            System.out.println("===== " + name + " =====");
+            System.out.println(StringUtils.center(name, 60, '='));
             verifySignature(fields, name);
         }
         System.out.println();

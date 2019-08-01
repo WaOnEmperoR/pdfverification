@@ -57,7 +57,7 @@ public class Verifier {
 
     KeyStore ks;
 
-    public PdfPKCS7 verifySignature(AcroFields fields, String name) throws GeneralSecurityException, IOException {
+    public PdfPKCS7 verifySignature(AcroFields fields, String name) throws GeneralSecurityException, IOException, UnrecognizedSignatureException {
         System.out.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name));
         System.out.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions());
         PdfPKCS7 pkcs7 = fields.verifySignature(name);
@@ -105,7 +105,7 @@ public class Verifier {
                 System.out.format("%3s %s\n", (i+1), errors.get(i).getMessage());
             }
             
-            return null;
+            throw new UnrecognizedSignatureException("Unrecognized Certificate(s)!");
         }
         
         Certificate[] awal = new Certificate[1];
@@ -229,7 +229,7 @@ public class Verifier {
         }
     }
 
-    public void verifySignatures(String path) throws IOException, GeneralSecurityException {
+    public void verifySignatures(String path) throws IOException, GeneralSecurityException, UnrecognizedSignatureException {
 //        System.out.println(path);
         PdfReader reader = new PdfReader(path);
 //        PdfReader reader = new PdfReader(new URL("https://blogs.adobe.com/security/SampleSignedPDFDocument.pdf").openStream());

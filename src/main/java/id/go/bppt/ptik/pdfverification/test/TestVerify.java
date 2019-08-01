@@ -5,6 +5,7 @@
  */
 package id.go.bppt.ptik.pdfverification.test;
 
+import id.go.bppt.ptik.pdfverification.utils.UnrecognizedSignatureException;
 import id.go.bppt.ptik.pdfverification.utils.Verifier;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -47,10 +48,10 @@ public class TestVerify {
             ks.load(null, null);
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            ks.setCertificateEntry("root",
-                    cf.generateCertificate(new FileInputStream(ROOT)));
-//            ks.setCertificateEntry("dev",
-//                    cf.generateCertificate(new FileInputStream(DEV)));
+//            ks.setCertificateEntry("root",
+//                    cf.generateCertificate(new FileInputStream(ROOT)));
+            ks.setCertificateEntry("dev",
+                    cf.generateCertificate(new FileInputStream(DEV)));
 //            ks.setCertificateEntry("kpu",
 //                    cf.generateCertificate(new FileInputStream(KPU)));
 //            ks.setCertificateEntry("rachmawan",
@@ -60,7 +61,7 @@ public class TestVerify {
             verify.verifySignatures(DOC);
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException ex) {
             Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (GeneralSecurityException ex) {
+        } catch (GeneralSecurityException | UnrecognizedSignatureException ex) {
             Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
         }
 

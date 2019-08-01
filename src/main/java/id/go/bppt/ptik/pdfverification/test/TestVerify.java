@@ -47,10 +47,10 @@ public class TestVerify {
             ks.load(null, null);
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-//            ks.setCertificateEntry("root",
-//                    cf.generateCertificate(new FileInputStream(ROOT)));
-            ks.setCertificateEntry("dev",
-                    cf.generateCertificate(new FileInputStream(DEV)));
+            ks.setCertificateEntry("root",
+                    cf.generateCertificate(new FileInputStream(ROOT)));
+//            ks.setCertificateEntry("dev",
+//                    cf.generateCertificate(new FileInputStream(DEV)));
 //            ks.setCertificateEntry("kpu",
 //                    cf.generateCertificate(new FileInputStream(KPU)));
 //            ks.setCertificateEntry("rachmawan",

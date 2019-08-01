@@ -97,20 +97,22 @@ public class Verifier {
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
         
         if (errors.isEmpty()) {
-            System.out.println(StringUtils.center("Certs verified against the Keystore", 60, '='));
+            System.out.println(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
             System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
             for (int i=0; i<errors.size(); i++)
             {
                 System.out.format("%3s %s\n", (i+1), errors.get(i).getMessage());
             }
+            
+            return null;
         }
         
         Certificate[] awal = new Certificate[1];
         awal[0] = certs[1];
         List<VerificationException> errors2 = CertificateVerification.verifyCertificates(awal, ks, cal);
         if (errors2.isEmpty()) {
-            System.out.println(StringUtils.center("Certs verified against the Keystore", 60, '='));
+            System.out.println(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
             System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
             System.out.format("%3s %s\n", "1", errors2);
@@ -215,19 +217,15 @@ public class Verifier {
         try {
             cert.checkValidity(signDate);
             System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
-        } catch (CertificateExpiredException e) {
-            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
-        } catch (CertificateNotYetValidException e) {
-            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
+        } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+            System.out.println(StringUtils.center(e.getMessage(), 60, '='));
         }
         
         try {
             cert.checkValidity();
             System.out.println(StringUtils.center("The certificate is still valid.", 60, '='));
-        } catch (CertificateExpiredException e) {
-            System.out.println(StringUtils.center("The certificate has expired.", 60, '='));
-        } catch (CertificateNotYetValidException e) {
-            System.out.println(StringUtils.center("The certificate is not valid yet.", 60, '='));
+        } catch (CertificateExpiredException | CertificateNotYetValidException e) {
+            System.out.println(StringUtils.center(e.getMessage(), 60, '='));
         }
     }
 

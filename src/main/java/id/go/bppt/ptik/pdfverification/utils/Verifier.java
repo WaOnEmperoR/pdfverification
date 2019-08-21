@@ -236,6 +236,11 @@ public class Verifier {
         for (String name : names) {
 //            System.out.println("===== " + name + " =====");
             System.out.println(StringUtils.center(name, 60, '='));
+            
+            System.out.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name));
+            System.out.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions());
+            PdfPKCS7 pkcs7 = fields.verifySignature(name);
+            System.out.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify());
             verifySignature(fields, name);
         }
         System.out.println();

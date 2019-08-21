@@ -39,8 +39,12 @@ public class TestVerify {
     public static final String IOTENTIK_SERVER = "/home/ipteknet/kpu/pdf_certs/iOTENTIK.cer";
     public static final String KPU_SERVER = "/home/ipteknet/kpu/pdf_certs/KPU.cer";
     
+    public static final String ROOT_LOCAL = "D:\\Tugas PTIK\\Pemilu Elektronik\\pdf_certs\\BPPT_Root.cer";
+    public static final String IOTENTIK_LOCAL = "D:\\Tugas PTIK\\Pemilu Elektronik\\pdf_certs\\iOTENTIK.cer";
+    public static final String KPU_LOCAL = "D:\\Tugas PTIK\\Pemilu Elektronik\\pdf_certs\\KPU.cer";
+    
     public static final String DOC_SERVER = "/home/ipteknet/kpu/java_pdf_01/cf0031f1-36f8-420e-bd8b-52552ef8f501.pdf";
-//    public static final String DOC = "D:\\Tugas PTIK\\Pemilu Elektronik\\7423027e-89c4-40a2-a24c-246488f910be.pdf";
+    public static final String DOC = "D:\\Tugas PTIK\\Pemilu Elektronik\\7423027e-89c4-40a2-a24c-246488f910be.pdf";
 //    public static final String DOC = "D:\\Tugas PTIK\\Certificate Authority\\iOTENTIK 2019\\tes_TSA.pdf";
     
     public static void main(String[] args) {
@@ -54,16 +58,16 @@ public class TestVerify {
 
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
             ks.setCertificateEntry("root",
-                    cf.generateCertificate(new FileInputStream(ROOT_SERVER)));
+                    cf.generateCertificate(new FileInputStream(ROOT_LOCAL)));
             ks.setCertificateEntry("iotentik",
-                    cf.generateCertificate(new FileInputStream(IOTENTIK_SERVER)));
+                    cf.generateCertificate(new FileInputStream(IOTENTIK_LOCAL)));
             ks.setCertificateEntry("kpu",
-                    cf.generateCertificate(new FileInputStream(KPU_SERVER)));
+                    cf.generateCertificate(new FileInputStream(KPU_LOCAL)));
 //            ks.setCertificateEntry("rachmawan",
 //                    cf.generateCertificate(new FileInputStream(RACHMAWAN)));
             
             Verifier verify = new Verifier(ks);
-            verify.verifySignatures(DOC_SERVER);
+            verify.verifySignatures(DOC);
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException ex) {
             Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
         } catch (GeneralSecurityException | UnrecognizedSignatureException ex) {

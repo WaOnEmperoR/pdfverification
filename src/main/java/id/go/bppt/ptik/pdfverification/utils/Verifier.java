@@ -33,8 +33,8 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import javax.crypto.interfaces.DHPublicKey;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -52,12 +52,14 @@ import org.apache.commons.lang3.StringUtils;
 public class Verifier {
 
     KeyStore ks;
+    private Logger logger;
 
     public PdfPKCS7 verifySignature(AcroFields fields, String name) throws GeneralSecurityException, IOException, UnrecognizedSignatureException {
-        System.out.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name));
-        System.out.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions());
+        logger.debug(String.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name)));
+        logger.debug(String.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions()));
+        
         PdfPKCS7 pkcs7 = fields.verifySignature(name);
-        System.out.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify());
+        logger.debug(String.format(name, "%-40s%s\n", "Integrity check OK?", pkcs7.verify()));
         
         if (pkcs7.isTsp()) {
             System.out.println(StringUtils.center("BEGIN TSP READING", 60, '='));
@@ -72,22 +74,22 @@ public class Verifier {
             for (X509CertificateHolder certHolder : holders) {
                 X509Certificate certFromTSA = new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certHolder);
                 
-                System.out.format("%-40s%s\n", "Issuer", certFromTSA.getIssuerDN().toString());
-                System.out.format("%-40s%s\n", "Subject", certFromTSA.getSubjectDN().toString());
+                logger.debug(String.format("%-40s%s\n", "Issuer", certFromTSA.getIssuerDN().toString()));
+                logger.debug(String.format("%-40s%s\n", "Subject", certFromTSA.getSubjectDN().toString()));
             }
 
             System.out.println(tsInfo.getSerialNumber().toString(16));
             System.out.println(tsInfo.getGenTime().toString());
             
-            System.out.format("%-40s%s\n", "TSA Serial Number", tsInfo.getSerialNumber().toString(16));
-            System.out.format("%-40s%s\n", "TSA Generation Time", tsInfo.getGenTime());
+            logger.debug(String.format("%-40s%s\n", "TSA Serial Number", tsInfo.getSerialNumber().toString(16)));
+            logger.debug(String.format("%-40s%s\n", "TSA Generation Time", tsInfo.getGenTime()));
             
             System.out.println(StringUtils.center("END TSP READING", 60, '='));
             
             return pkcs7;
         }
 
-        System.out.format("%-40s%s\n", "SignName", pkcs7.getSignName());
+        logger.debug(String.format("%-40s%s\n", "SignName", pkcs7.getSignName()));
         Certificate[] certs = pkcs7.getCertificates();
         Calendar cal = pkcs7.getSignDate();
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
@@ -98,7 +100,7 @@ public class Verifier {
             System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
             for (int i=0; i<errors.size(); i++)
             {
-                System.out.format("%3s %s\n", (i+1), errors.get(i).getMessage());
+                logger.debug(String.format("%3s %s\n", (i+1), errors.get(i).getMessage()));
             }
             
             throw new UnrecognizedSignatureException("Unrecognized Certificate(s)!");
@@ -111,7 +113,7 @@ public class Verifier {
             System.out.println(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
             System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
-            System.out.format("%3s %s\n", "1", errors2);
+            logger.debug(String.format("%3s %s\n", "1", errors2));
         }
         
         for (int i = 0; i < certs.length; i++) {
@@ -160,9 +162,9 @@ public class Verifier {
 
     public void showCertificateInfo(X509Certificate cert, Date signDate) throws CertificateExpiredException, CertificateNotYetValidException {
        
-        System.out.format("%-40s%s\n", "Issuer", cert.getIssuerDN().getName());
-        System.out.format("%-40s%s\n", "Subject", cert.getSubjectDN().getName());
-        System.out.format("%-40s%s\n", "Serial Number", cert.getSerialNumber().toString(16));
+        logger.debug(String.format("%-40s%s\n", "Issuer", cert.getIssuerDN().getName()));
+        logger.debug(String.format("%-40s%s\n", "Subject", cert.getSubjectDN().getName()));
+        logger.debug(String.format("%-40s%s\n", "Serial Number", cert.getSerialNumber().toString(16)));
         
         int len;
         
@@ -170,30 +172,30 @@ public class Verifier {
         {
             RSAPublicKey rsaPk = (RSAPublicKey) cert.getPublicKey();
             len = rsaPk.getModulus().bitLength();
-            System.out.format("%-40s%s\n", "Public Key Type", "RSA Public Key (" + len + " bit)");
+            logger.debug(String.format("%-40s%s\n", "Public Key Type", "RSA Public Key (" + len + " bit)"));
         }
         else if(cert.getPublicKey() instanceof DSAPublicKey)
         {
             DSAPublicKey dsaPk = (DSAPublicKey) cert.getPublicKey();
             len = dsaPk.getY().bitLength();
-            System.out.format("%-40s%s\n", "Public Key Type", "DSA Public Key (" + len + " bit)");
+            logger.debug(String.format("%-40s%s\n", "Public Key Type", "DSA Public Key (" + len + " bit)"));
         }
         else if(cert.getPublicKey() instanceof ECPublicKey)
         {
-            System.out.format("%-40s%s\n", "Public Key Type", "EC Public Key");
+            logger.debug(String.format("%-40s%s\n", "Public Key Type", "EC Public Key"));
         }
         else if(cert.getPublicKey() instanceof DHPublicKey)
         {
             DHPublicKey dhPk = (DHPublicKey) cert.getPublicKey();
             len = dhPk.getY().bitLength();
-            System.out.format("%-40s%s\n", "Public Key Type", "DH Public Key (" + len + " bit)");
+            logger.debug(String.format("%-40s%s\n", "Public Key Type", "DH Public Key (" + len + " bit)"));
         }
         else
         {
-            System.out.format("%-40s%s\n", "Public Key Type", "Unknown Public Key Type");
+            logger.debug(String.format("%-40s%s\n", "Public Key Type", "Unknown Public Key Type"));
         }
         
-        System.out.format("%-40s%s\n", "Signature Algorithm", cert.getSigAlgName());
+        logger.debug(String.format("%-40s%s\n", "Signature Algorithm", cert.getSigAlgName()));
         
         MessageDigest digest;
         try {
@@ -201,14 +203,14 @@ public class Verifier {
             byte[] result = digest.digest(cert.getEncoded());
             String hex = Hex.toHexString(result).toUpperCase();
             String res = StringFormatter.insertPeriodically(hex, "::", 2);
-            System.out.format("%-40s%s\n", "SHA1 Fingerprint", res);
+            logger.debug(String.format("%-40s%s\n", "SHA1 Fingerprint", res));
         } catch (NoSuchAlgorithmException | CertificateEncodingException ex) {
-            Logger.getLogger(Verifier.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error(ex.getMessage());
         }
 
         SimpleDateFormat date_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SS");
-        System.out.format("%-40s%s\n", "Valid from", date_format.format(cert.getNotBefore()));
-        System.out.format("%-40s%s\n", "Valid to", date_format.format(cert.getNotAfter()));
+        logger.debug(String.format("%-40s%s\n", "Valid from", date_format.format(cert.getNotBefore())));
+        logger.debug(String.format("%-40s%s\n", "Valid to", date_format.format(cert.getNotAfter())));
         
         try {
             cert.checkValidity(signDate);
@@ -237,10 +239,10 @@ public class Verifier {
 //            System.out.println("===== " + name + " =====");
             System.out.println(StringUtils.center(name, 60, '='));
             
-            System.out.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name));
-            System.out.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions());
+            logger.debug(String.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name)));
+            logger.debug(String.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions()));
             PdfPKCS7 pkcs7 = fields.verifySignature(name);
-            System.out.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify());
+            logger.debug(String.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify()));
             verifySignature(fields, name);
         }
         System.out.println();
@@ -250,7 +252,22 @@ public class Verifier {
         this.ks = ks;
     }
 
-    public Verifier(KeyStore ks_param) {
+    public Verifier(KeyStore ks_param, Logger logger) {
         setKeyStore(ks_param);
+        setLogger(logger);
+    }
+
+    /**
+     * @return the logger
+     */
+    public Logger getLogger() {
+        return logger;
+    }
+
+    /**
+     * @param logger the logger to set
+     */
+    public void setLogger(Logger logger) {
+        this.logger = logger;
     }
 }

@@ -66,12 +66,12 @@ public class TestVerify {
 //            ks.setCertificateEntry("rachmawan",
 //                    cf.generateCertificate(new FileInputStream(RACHMAWAN)));
             
-            Verifier verify = new Verifier(ks);
-            verify.verifySignatures(DOC);
+//            Verifier verify = new Verifier(ks);
+//            verify.verifySignatures(DOC);
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException ex) {
             Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (GeneralSecurityException | UnrecognizedSignatureException ex) {
-            Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
+//        } catch (GeneralSecurityException | UnrecognizedSignatureException ex) {
+//            Logger.getLogger(TestVerify.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

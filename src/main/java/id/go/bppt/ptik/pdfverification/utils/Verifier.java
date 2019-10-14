@@ -97,10 +97,10 @@ public class Verifier {
         if (errors.isEmpty()) {
             logger.debug(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
-            logger.debug(StringUtils.center("ERROR(S)!!", 60, '='));
+            logger.error(StringUtils.center("ERROR(S)!!", 60, '='));
             for (int i=0; i<errors.size(); i++)
             {
-                logger.debug(String.format("%3s %s\n", (i+1), errors.get(i).getMessage()));
+                logger.error(String.format("%3s %s\n", (i+1), errors.get(i).getMessage()));
             }
             
             throw new UnrecognizedSignatureException("Unrecognized Certificate(s)!");
@@ -112,8 +112,8 @@ public class Verifier {
         if (errors2.isEmpty()) {
             logger.debug(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
-            logger.debug(StringUtils.center("ERROR(S)!!", 60, '='));
-            logger.debug(String.format("%3s %s\n", "1", errors2));
+            logger.error(StringUtils.center("ERROR(S)!!", 60, '='));
+            logger.error(String.format("%3s %s\n", "1", errors2));
         }
         
         for (int i = 0; i < certs.length; i++) {
@@ -152,10 +152,10 @@ public class Verifier {
             verification.addAll(crlVerifier.verify(signCert, issuerCert, date));
         }
         if (verification.isEmpty()) {
-            logger.debug(StringUtils.center("The signing certificate couldn't be verified", 60, '='));
+            logger.error(StringUtils.center("The signing certificate couldn't be verified", 60, '='));
         } else {
             verification.forEach((v) -> {
-                logger.debug(v.toString());
+                logger.error(v.toString());
             });
         }
     }

@@ -62,7 +62,7 @@ public class Verifier {
         logger.debug(String.format(name, "%-40s%s\n", "Integrity check OK?", pkcs7.verify()));
         
         if (pkcs7.isTsp()) {
-            System.out.println(StringUtils.center("BEGIN TSP READING", 60, '='));
+            logger.debug(StringUtils.center("BEGIN TSP READING", 60, '='));
             
             TimeStampToken token = pkcs7.getTimeStampToken();
             TimeStampTokenInfo tsInfo = token.getTimeStampInfo();
@@ -78,13 +78,13 @@ public class Verifier {
                 logger.debug(String.format("%-40s%s\n", "Subject", certFromTSA.getSubjectDN().toString()));
             }
 
-            System.out.println(tsInfo.getSerialNumber().toString(16));
-            System.out.println(tsInfo.getGenTime().toString());
+            logger.debug(tsInfo.getSerialNumber().toString(16));
+            logger.debug(tsInfo.getGenTime().toString());
             
             logger.debug(String.format("%-40s%s\n", "TSA Serial Number", tsInfo.getSerialNumber().toString(16)));
             logger.debug(String.format("%-40s%s\n", "TSA Generation Time", tsInfo.getGenTime()));
             
-            System.out.println(StringUtils.center("END TSP READING", 60, '='));
+            logger.debug(StringUtils.center("END TSP READING", 60, '='));
             
             return pkcs7;
         }
@@ -95,9 +95,9 @@ public class Verifier {
         List<VerificationException> errors = CertificateVerification.verifyCertificates(certs, ks, cal);
         
         if (errors.isEmpty()) {
-            System.out.println(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
+            logger.debug(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
-            System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
+            logger.debug(StringUtils.center("ERROR(S)!!", 60, '='));
             for (int i=0; i<errors.size(); i++)
             {
                 logger.debug(String.format("%3s %s\n", (i+1), errors.get(i).getMessage()));
@@ -110,30 +110,30 @@ public class Verifier {
         awal[0] = certs[1];
         List<VerificationException> errors2 = CertificateVerification.verifyCertificates(awal, ks, cal);
         if (errors2.isEmpty()) {
-            System.out.println(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
+            logger.debug(StringUtils.center("Certificate(s) verified against the Keystore", 60, '='));
         } else {
-            System.out.println(StringUtils.center("ERROR(S)!!", 60, '='));
+            logger.debug(StringUtils.center("ERROR(S)!!", 60, '='));
             logger.debug(String.format("%3s %s\n", "1", errors2));
         }
         
         for (int i = 0; i < certs.length; i++) {
             X509Certificate cert = (X509Certificate) certs[i];
-            System.out.println(StringUtils.center("Certificate " + i, 60, '='));
+            logger.debug(StringUtils.center("Certificate " + i, 60, '='));
             showCertificateInfo(cert, cal.getTime());
         }
         X509Certificate signCert = (X509Certificate) certs[0];
         X509Certificate issuerCert = (certs.length > 1 ? (X509Certificate) certs[1] : null);
 
-        System.out.println(StringUtils.center("Checking validity of the document at the time of signing", 60, '='));
+        logger.debug(StringUtils.center("Checking validity of the document at the time of signing", 60, '='));
         checkRevocation(pkcs7, signCert, issuerCert, cal.getTime());
 
-        System.out.println(StringUtils.center("Checking validity of the document today", 60, '='));
+        logger.debug(StringUtils.center("Checking validity of the document today", 60, '='));
         checkRevocation(pkcs7, signCert, issuerCert, new Date());
 
         return pkcs7;
     }
 
-    public static void checkRevocation(PdfPKCS7 pkcs7, X509Certificate signCert, X509Certificate issuerCert, Date date) throws GeneralSecurityException, IOException {
+    public void checkRevocation(PdfPKCS7 pkcs7, X509Certificate signCert, X509Certificate issuerCert, Date date) throws GeneralSecurityException, IOException {
         List<BasicOCSPResp> ocsps = new ArrayList<>();
         if (pkcs7.getOcsp() != null) {
             ocsps.add(pkcs7.getOcsp());
@@ -152,10 +152,10 @@ public class Verifier {
             verification.addAll(crlVerifier.verify(signCert, issuerCert, date));
         }
         if (verification.isEmpty()) {
-            System.out.println(StringUtils.center("The signing certificate couldn't be verified", 60, '='));
+            logger.debug(StringUtils.center("The signing certificate couldn't be verified", 60, '='));
         } else {
             verification.forEach((v) -> {
-                System.out.println(v);
+                logger.debug(v.toString());
             });
         }
     }
@@ -214,21 +214,21 @@ public class Verifier {
         
         try {
             cert.checkValidity(signDate);
-            System.out.println(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
+            logger.error(StringUtils.center("The certificate was valid at the time of signing.", 60, '='));
         } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-            System.out.println(StringUtils.center(e.getMessage(), 60, '='));
+            logger.error(StringUtils.center(e.getMessage(), 60, '='));
         }
         
         try {
             cert.checkValidity();
-            System.out.println(StringUtils.center("The certificate is still valid.", 60, '='));
+            logger.error(StringUtils.center("The certificate is still valid.", 60, '='));
         } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-            System.out.println(StringUtils.center(e.getMessage(), 60, '='));
+            logger.error(StringUtils.center(e.getMessage(), 60, '='));
         }
     }
 
     public void verifySignatures(String path) throws IOException, GeneralSecurityException, UnrecognizedSignatureException {
-//        System.out.println(path);
+//        logger.debug(path);
         PdfReader reader = new PdfReader(path);
 //        PdfReader reader = new PdfReader(new URL("https://blogs.adobe.com/security/SampleSignedPDFDocument.pdf").openStream());
 //        PdfReader reader = new PdfReader(new URL("https://teken.govca.id/storage/signpdf/demo/15.04.1062_cover_signed_15489103175c527eed768b46.pdf").openStream());
@@ -236,8 +236,8 @@ public class Verifier {
         ArrayList<String> names = fields.getSignatureNames();
 
         for (String name : names) {
-//            System.out.println("===== " + name + " =====");
-            System.out.println(StringUtils.center(name, 60, '='));
+//            logger.debug("===== " + name + " =====");
+            logger.debug(StringUtils.center(name, 60, '='));
             
             logger.debug(String.format("%-40s%s\n", "Signature covers whole document", fields.signatureCoversWholeDocument(name)));
             logger.debug(String.format("%-40s%s\n", "Document Revision", fields.getRevision(name) + " of " + fields.getTotalRevisions()));
@@ -245,7 +245,6 @@ public class Verifier {
             logger.debug(String.format("%-40s%s\n", "Integrity check OK?", pkcs7.verify()));
             verifySignature(fields, name);
         }
-        System.out.println();
     }
 
     private void setKeyStore(KeyStore ks) {
